@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Github, Twitter, Discord } from "lucide-react";
+import { Github, Twitter } from "lucide-react";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -54,7 +54,7 @@ const Auth = () => {
     }
   };
 
-  const handleOAuthLogin = async (provider: "github" | "twitter" | "discord") => {
+  const handleOAuthLogin = async (provider: "github" | "twitter") => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -114,20 +114,13 @@ const Auth = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <Button
             variant="outline"
             onClick={() => handleOAuthLogin("github")}
             disabled={loading}
           >
             <Github className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => handleOAuthLogin("discord")}
-            disabled={loading}
-          >
-            <Discord className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
