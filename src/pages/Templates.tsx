@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Bot, Brain, Message, Zap } from "lucide-react";
+import { Bot, Brain, Bot as ChatBot, Zap } from "lucide-react";
 
 const Templates = () => {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ const Templates = () => {
     {
       title: "Customer Support Agent",
       description: "AI agent optimized for handling customer inquiries and support tickets",
-      icon: Message,
+      icon: ChatBot,
       category: "Support",
     },
     {
