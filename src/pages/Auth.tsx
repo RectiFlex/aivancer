@@ -29,12 +29,20 @@ const Auth = () => {
           email,
           password,
           options: {
-            data: {
-              remember_me: rememberMe,
-            },
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         });
         if (error) throw error;
+
+        // Update remember_me preference after signup
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase
+            .from('profiles')
+            .update({ remember_me: rememberMe })
+            .eq('id', user.id);
+        }
+
         toast({
           title: "Welcome!",
           description: "Please check your email to confirm your account.",
@@ -46,11 +54,14 @@ const Auth = () => {
         });
         if (error) throw error;
 
-        // Update remember_me preference
-        await supabase
-          .from('profiles')
-          .update({ remember_me: rememberMe })
-          .eq('id', (await supabase.auth.getUser()).data.user?.id);
+        // Update remember_me preference after login
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase
+            .from('profiles')
+            .update({ remember_me: rememberMe })
+            .eq('id', user.id);
+        }
 
         toast({
           title: "Welcome back!",
@@ -83,9 +94,6 @@ const Auth = () => {
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          data: {
-            remember_me: rememberMe,
-          },
         },
       });
       if (error) throw error;
