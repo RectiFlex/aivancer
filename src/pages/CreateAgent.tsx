@@ -76,9 +76,21 @@ const CreateAgent = () => {
     try {
       const values = form.getValues();
       const { error } = await supabase.from("agents").insert({
-        ...values,
+        name: values.name,
         status: "draft",
         creator_id: (await supabase.auth.getUser()).data.user?.id,
+        configuration: {
+          style: values.style,
+          bio: values.bio,
+          modelProvider: values.modelProvider,
+          lore: values.lore,
+          plugins: values.plugins,
+          clients: values.clients,
+          messageExamples: values.messageExamples,
+          postExamples: values.postExamples,
+          topics: values.topics,
+          adjectives: values.adjectives,
+        },
       });
 
       if (error) throw error;
@@ -102,9 +114,21 @@ const CreateAgent = () => {
     try {
       setIsSubmitting(true);
       const { error } = await supabase.from("agents").insert({
-        ...values,
+        name: values.name,
         status: "active",
         creator_id: (await supabase.auth.getUser()).data.user?.id,
+        configuration: {
+          style: values.style,
+          bio: values.bio,
+          modelProvider: values.modelProvider,
+          lore: values.lore,
+          plugins: values.plugins,
+          clients: values.clients,
+          messageExamples: values.messageExamples,
+          postExamples: values.postExamples,
+          topics: values.topics,
+          adjectives: values.adjectives,
+        },
       });
 
       if (error) throw error;
