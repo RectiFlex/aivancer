@@ -11,112 +11,73 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+
+const formSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  modelProvider: z.string(),
+  clients: z.array(z.string()),
+  plugins: z.array(z.string()),
+  bio: z.string().min(10, "Bio must be at least 10 characters"),
+  lore: z.string(),
+  messageExamples: z.string(),
+  postExamples: z.string(),
+  style: z.enum(["All", "Chat", "Post"]),
+  topics: z.string(),
+  adjectives: z.string(),
+});
 
 const CreateAgent = () => {
   const [searchParams] = useSearchParams();
   const template = searchParams.get("template");
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    model: "",
-    personality: {
-      background: "",
-      traits: [],
-      style: "",
-    }
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      modelProvider: "",
+      clients: [],
+      plugins: [],
+      bio: "",
+      lore: "",
+      messageExamples: "",
+      postExamples: "",
+      style: "All",
+      topics: "",
+      adjectives: "",
+    },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Here you would typically send the data to your backend
-    toast({
-      title: "Agent Created",
-      description: "Your agent has been created successfully!",
-    });
-    navigate("/agents");
-  };
-
-  const renderStep = () => {
-    switch (step) {
-      case 1:
-        return (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Agent Name</label>
-              <Input
-                placeholder="Enter agent name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
-              <Textarea
-                placeholder="Describe your agent's purpose"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Base Model</label>
-              <Select
-                value={formData.model}
-                onValueChange={(value) => setFormData({ ...formData, model: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a model" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="gpt-4">GPT-4</SelectItem>
-                  <SelectItem value="claude">Claude</SelectItem>
-                  <SelectItem value="custom">Custom Model</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        );
-      case 2:
-        return (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Background Story</label>
-              <Textarea
-                placeholder="Define your agent's background"
-                value={formData.personality.background}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  personality: { ...formData.personality, background: e.target.value }
-                })}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Communication Style</label>
-              <Select
-                value={formData.personality.style}
-                onValueChange={(value) => setFormData({
-                  ...formData,
-                  personality: { ...formData.personality, style: value }
-                })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a style" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="professional">Professional</SelectItem>
-                  <SelectItem value="friendly">Friendly</SelectItem>
-                  <SelectItem value="technical">Technical</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        );
-      default:
-        return null;
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      // Here you would typically send the data to your backend
+      console.log("Form values:", values);
+      
+      toast({
+        title: "Agent Created",
+        description: "Your agent has been created successfully!",
+      });
+      navigate("/agents");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create agent. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -124,58 +85,239 @@ const CreateAgent = () => {
     <div className="container mx-auto p-8 animate-fadeIn">
       <Card className="max-w-2xl mx-auto p-6 glass-card">
         <h1 className="text-3xl font-bold mb-6">
-          {template ? `Create ${template.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}` : "Create New Agent"}
+          {template
+            ? `Create ${template.split("-").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")}`
+            : "Create New Agent"}
         </h1>
-        
-        <div className="mb-8">
-          <div className="flex justify-between mb-4">
-            {[1, 2].map((stepNumber) => (
-              <Button
-                key={stepNumber}
-                variant={step === stepNumber ? "default" : "outline"}
-                onClick={() => setStep(stepNumber)}
-                className="w-full mx-2"
-              >
-                Step {stepNumber}
-              </Button>
-            ))}
-          </div>
-          <div className="h-2 bg-secondary rounded-full">
-            <div
-              className="h-full bg-primary rounded-full transition-all duration-300"
-              style={{ width: `${(step / 2) * 100}%` }}
-            />
-          </div>
-        </div>
 
-        <form onSubmit={handleSubmit}>
-          {renderStep()}
-          
-          <div className="flex justify-between mt-8">
-            {step > 1 && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setStep(step - 1)}
-              >
-                Previous
-              </Button>
-            )}
-            {step < 2 ? (
-              <Button
-                type="button"
-                onClick={() => setStep(step + 1)}
-                className="ml-auto"
-              >
-                Next
-              </Button>
-            ) : (
-              <Button type="submit" className="ml-auto">
-                Create Agent
-              </Button>
-            )}
-          </div>
-        </form>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter agent name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="modelProvider"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Model Provider</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a model provider" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="anthropic">Anthropic</SelectItem>
+                      <SelectItem value="google">Google AI</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="clients"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Clients</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange([...field.value, value])}
+                    defaultValue={field.value[0]}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select clients" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="x">X (Twitter)</SelectItem>
+                      <SelectItem value="discord">Discord</SelectItem>
+                      <SelectItem value="telegram">Telegram</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="plugins"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Plugins</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange([...field.value, value])}
+                    defaultValue={field.value[0]}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select plugins" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="search">Web Search</SelectItem>
+                      <SelectItem value="calculator">Calculator</SelectItem>
+                      <SelectItem value="weather">Weather</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="bio"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bio</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter agent bio"
+                      className="min-h-[100px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="lore"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lore</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter agent lore/background story"
+                      className="min-h-[100px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="messageExamples"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Message Examples</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter example messages"
+                      className="min-h-[100px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Add example messages to establish interaction patterns
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="postExamples"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Post Examples</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter example posts"
+                      className="min-h-[100px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="style"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Style</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select style" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="All">All</SelectItem>
+                      <SelectItem value="Chat">Chat</SelectItem>
+                      <SelectItem value="Post">Post</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="topics"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Topics</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter topics (comma-separated)"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="adjectives"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Adjectives</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter adjectives (comma-separated)"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end">
+              <Button type="submit">Create Agent</Button>
+            </div>
+          </form>
+        </Form>
       </Card>
     </div>
   );
