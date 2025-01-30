@@ -191,6 +191,7 @@ export type Database = {
           created_at: string | null
           full_name: string | null
           id: string
+          remember_me: boolean | null
           subscription_tier:
             | Database["public"]["Enums"]["subscription_tier"]
             | null
@@ -202,6 +203,7 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id: string
+          remember_me?: boolean | null
           subscription_tier?:
             | Database["public"]["Enums"]["subscription_tier"]
             | null
@@ -213,6 +215,7 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
+          remember_me?: boolean | null
           subscription_tier?:
             | Database["public"]["Enums"]["subscription_tier"]
             | null

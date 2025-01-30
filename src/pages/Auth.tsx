@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Github, Twitter } from "lucide-react";
+import { Github, Twitter, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -26,6 +28,11 @@ const Auth = () => {
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            data: {
+              remember_me: rememberMe,
+            },
+          },
         });
         if (error) throw error;
         toast({
@@ -38,6 +45,13 @@ const Auth = () => {
           password,
         });
         if (error) throw error;
+
+        // Update remember_me preference
+        await supabase
+          .from('profiles')
+          .update({ remember_me: rememberMe })
+          .eq('id', (await supabase.auth.getUser()).data.user?.id);
+
         toast({
           title: "Welcome back!",
           description: "Successfully logged in.",
@@ -45,9 +59,16 @@ const Auth = () => {
       }
       navigate("/");
     } catch (error: any) {
+      let errorMessage = error.message;
+      if (error.message.includes("Email not confirmed")) {
+        errorMessage = "Please check your email to confirm your account.";
+      } else if (error.message.includes("Invalid login credentials")) {
+        errorMessage = "Invalid email or password.";
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "An error occurred during authentication.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -62,6 +83,9 @@ const Auth = () => {
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            remember_me: rememberMe,
+          },
         },
       });
       if (error) throw error;
@@ -126,6 +150,18 @@ const Auth = () => {
                 />
               )}
             </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="remember"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                disabled={isLoading}
+              />
+              <Label htmlFor="remember" className="text-sm">
+                Remember me
+              </Label>
+            </div>
           </div>
 
           <Button
@@ -135,7 +171,7 @@ const Auth = () => {
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
-                <span className="animate-spin">⚪</span>
+                <Loader2 className="h-4 w-4 animate-spin" />
                 {isSignUp ? "Creating account..." : "Signing in..."}
               </span>
             ) : (
