@@ -3,8 +3,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { QuickStartCard } from "@/components/QuickStartCard";
 import { SystemStatus } from "@/components/SystemStatus";
-import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 const quickStartOptions = [
   {
@@ -25,13 +25,22 @@ const quickStartOptions = [
 ];
 
 const Index = () => {
-  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleQuickStart = (title: string) => {
-    toast({
-      title: "Coming Soon",
-      description: `${title} feature will be available in the next update!`,
-    });
+    switch (title) {
+      case "Upload Configuration":
+        navigate("/create");
+        break;
+      case "Build from Scratch":
+        navigate("/create");
+        break;
+      case "Use Template":
+        navigate("/templates");
+        break;
+      default:
+        break;
+    }
   };
 
   return (
