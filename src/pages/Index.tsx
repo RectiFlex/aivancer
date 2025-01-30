@@ -6,8 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAgentUpdates } from "@/hooks/useAgentUpdates";
 import LoadingFallback from "@/components/LoadingFallback";
-import QuickStartCard from "@/components/QuickStartCard";
-import SystemStatus from "@/components/SystemStatus";
+import { QuickStartCard } from "@/components/QuickStartCard";
+import { SystemStatus } from "@/components/SystemStatus";
 
 const Index = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
