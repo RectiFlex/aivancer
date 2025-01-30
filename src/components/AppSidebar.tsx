@@ -1,6 +1,15 @@
 import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
-import { LayoutDashboard, UserCog, Settings, Activity, MessageSquare, LogOut } from "lucide-react";
+import { 
+  LayoutDashboard, 
+  UserCog, 
+  Settings, 
+  Activity, 
+  MessageSquare, 
+  LogOut,
+  FileText,
+  Users
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,14 +22,24 @@ const links = [
     icon: <LayoutDashboard className="text-foreground h-5 w-5 flex-shrink-0" />,
   },
   {
-    label: "Agent Chat",
-    href: "/chat",
-    icon: <MessageSquare className="text-foreground h-5 w-5 flex-shrink-0" />,
+    label: "Templates",
+    href: "/templates",
+    icon: <FileText className="text-foreground h-5 w-5 flex-shrink-0" />,
+  },
+  {
+    label: "Agents",
+    href: "/agents",
+    icon: <Users className="text-foreground h-5 w-5 flex-shrink-0" />,
   },
   {
     label: "Create Agent",
     href: "/create",
     icon: <UserCog className="text-foreground h-5 w-5 flex-shrink-0" />,
+  },
+  {
+    label: "Agent Chat",
+    href: "/chat",
+    icon: <MessageSquare className="text-foreground h-5 w-5 flex-shrink-0" />,
   },
   {
     label: "Monitoring",
