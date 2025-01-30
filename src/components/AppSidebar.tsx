@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
-import { LayoutDashboard, UserCog, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, UserCog, Settings, Activity, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -14,10 +14,24 @@ const links = [
     ),
   },
   {
+    label: "Agent Chat",
+    href: "/chat",
+    icon: (
+      <MessageSquare className="text-foreground h-5 w-5 flex-shrink-0" />
+    ),
+  },
+  {
     label: "Create Agent",
     href: "/create",
     icon: (
       <UserCog className="text-foreground h-5 w-5 flex-shrink-0" />
+    ),
+  },
+  {
+    label: "Monitoring",
+    href: "/monitoring",
+    icon: (
+      <Activity className="text-foreground h-5 w-5 flex-shrink-0" />
     ),
   },
   {
