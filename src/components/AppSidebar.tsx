@@ -1,45 +1,36 @@
 import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
-import { LayoutDashboard, UserCog, Settings, Activity, MessageSquare } from "lucide-react";
-import { Link } from "react-router-dom";
+import { LayoutDashboard, UserCog, Settings, Activity, MessageSquare, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const links = [
   {
     label: "Dashboard",
     href: "/",
-    icon: (
-      <LayoutDashboard className="text-foreground h-5 w-5 flex-shrink-0" />
-    ),
+    icon: <LayoutDashboard className="text-foreground h-5 w-5 flex-shrink-0" />,
   },
   {
     label: "Agent Chat",
     href: "/chat",
-    icon: (
-      <MessageSquare className="text-foreground h-5 w-5 flex-shrink-0" />
-    ),
+    icon: <MessageSquare className="text-foreground h-5 w-5 flex-shrink-0" />,
   },
   {
     label: "Create Agent",
     href: "/create",
-    icon: (
-      <UserCog className="text-foreground h-5 w-5 flex-shrink-0" />
-    ),
+    icon: <UserCog className="text-foreground h-5 w-5 flex-shrink-0" />,
   },
   {
     label: "Monitoring",
     href: "/monitoring",
-    icon: (
-      <Activity className="text-foreground h-5 w-5 flex-shrink-0" />
-    ),
+    icon: <Activity className="text-foreground h-5 w-5 flex-shrink-0" />,
   },
   {
     label: "Settings",
     href: "/settings",
-    icon: (
-      <Settings className="text-foreground h-5 w-5 flex-shrink-0" />
-    ),
+    icon: <Settings className="text-foreground h-5 w-5 flex-shrink-0" />,
   },
 ];
 
@@ -74,6 +65,22 @@ export const LogoIcon = () => {
 
 export function AppSidebar() {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate("/auth");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
   
   return (
     <Sidebar open={open} setOpen={setOpen}>
@@ -85,6 +92,15 @@ export function AppSidebar() {
               <SidebarLink key={idx} link={link} />
             ))}
           </div>
+        </div>
+        <div className="mt-auto">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-3 py-2 w-full text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+          >
+            <LogOut className="h-5 w-5" />
+            {open && <span>Logout</span>}
+          </button>
         </div>
       </SidebarBody>
     </Sidebar>
