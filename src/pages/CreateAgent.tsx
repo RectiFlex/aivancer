@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Form } from "@/components/ui/form"; // Add this import
 import ProgressSteps from "@/components/ProgressSteps";
 import LoadingFallback from "@/components/LoadingFallback";
 import AgentFormFields from "@/components/AgentFormFields";
@@ -183,45 +184,47 @@ const CreateAgent = () => {
           </TabsList>
 
           <TabsContent value="edit">
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <AgentFormFields form={form} currentStep={currentStep} />
-              
-              <div className="flex justify-between pt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={saveDraft}
-                  disabled={isSubmitting}
-                >
-                  Save as Draft
-                </Button>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <AgentFormFields form={form} currentStep={currentStep} />
                 
-                <div className="space-x-4">
-                  {currentStep > 0 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setCurrentStep(currentStep - 1)}
-                    >
-                      Previous
-                    </Button>
-                  )}
+                <div className="flex justify-between pt-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={saveDraft}
+                    disabled={isSubmitting}
+                  >
+                    Save as Draft
+                  </Button>
                   
-                  {currentStep < steps.length - 1 ? (
-                    <Button
-                      type="button"
-                      onClick={() => setCurrentStep(currentStep + 1)}
-                    >
-                      Next
-                    </Button>
-                  ) : (
-                    <Button type="submit" disabled={isSubmitting}>
-                      Create Agent
-                    </Button>
-                  )}
+                  <div className="space-x-4">
+                    {currentStep > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setCurrentStep(currentStep - 1)}
+                      >
+                        Previous
+                      </Button>
+                    )}
+                    
+                    {currentStep < steps.length - 1 ? (
+                      <Button
+                        type="button"
+                        onClick={() => setCurrentStep(currentStep + 1)}
+                      >
+                        Next
+                      </Button>
+                    ) : (
+                      <Button type="submit" disabled={isSubmitting}>
+                        Create Agent
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </form>
+              </form>
+            </Form>
           </TabsContent>
 
           <TabsContent value="preview">
