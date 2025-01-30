@@ -8,9 +8,12 @@ import { useAgentUpdates } from "@/hooks/useAgentUpdates";
 import LoadingFallback from "@/components/LoadingFallback";
 import { QuickStartCard } from "@/components/QuickStartCard";
 import { SystemStatus } from "@/components/SystemStatus";
+import { PlusCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const navigate = useNavigate();
 
   const { data: agents, isLoading } = useQuery({
     queryKey: ['agents', refreshTrigger],
@@ -45,7 +48,12 @@ const Index = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <QuickStartCard />
+              <QuickStartCard 
+                title="Create New Agent"
+                description="Start building your custom AI agent with our intuitive creation wizard"
+                icon={PlusCircle}
+                onClick={() => navigate('/create-agent')}
+              />
               <SystemStatus />
             </div>
 
