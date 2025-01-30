@@ -1,5 +1,5 @@
 import { Upload, Code, Box } from "lucide-react";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { QuickStartCard } from "@/components/QuickStartCard";
 import { SystemStatus } from "@/components/SystemStatus";
@@ -48,7 +48,6 @@ const Index = () => {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <main className="flex-1 p-8">
-          <SidebarTrigger />
           <div className="max-w-7xl mx-auto space-y-8 animate-fadeIn">
             <div className="flex justify-between items-center">
               <h1 className="text-4xl font-bold">Welcome to Autonomous</h1>
