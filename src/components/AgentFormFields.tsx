@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import FileUploadField from "./FileUploadField";
 
 interface AgentFormFieldsProps {
   form: UseFormReturn<any>;
@@ -56,6 +57,25 @@ const AgentFormFields = ({ form, currentStep }: AgentFormFieldsProps) => {
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="files"
+          render={() => (
+            <FormItem>
+              <FormLabel>Upload Files</FormLabel>
+              <FormControl>
+                <FileUploadField
+                  onFileUpload={(fileData) => {
+                    const currentFiles = form.getValues("files") || [];
+                    form.setValue("files", [...currentFiles, fileData]);
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </>
     );
   }
@@ -85,8 +105,6 @@ const AgentFormFields = ({ form, currentStep }: AgentFormFieldsProps) => {
             </FormItem>
           )}
         />
-        
-        {/* Add other configuration fields */}
       </>
     );
   }
