@@ -101,19 +101,40 @@ const CreateAgent = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSubmitting(true);
-      const { error } = await supabase.from("agents").insert({
-        name: values.name,
-        status: "active",
-        configuration: {
-          bio: values.bio,
-          modelProvider: values.modelProvider,
-          lore: values.lore,
-          style: values.style,
-          files: values.files
-        },
-      });
+      
+      // Create the agent
+      const { data: agent, error: agentError } = await supabase
+        .from("agents")
+        .insert({
+          name: values.name,
+          status: "active",
+          configuration: {
+            bio: values.bio,
+            modelProvider: values.modelProvider,
+            lore: values.lore,
+            style: values.style,
+            files: values.files
+          },
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (agentError) throw agentError;
+
+      // If there are files, link them to the agent
+      if (values.files && values.files.length > 0) {
+        const { error: filesError } = await supabase
+          .from("agent_files")
+          .insert(
+            values.files.map(file => ({
+              agent_id: agent.id,
+              file_name: file.name,
+              file_path: file.path,
+            }))
+          );
+
+        if (filesError) throw filesError;
+      }
 
       toast({
         title: "Success",
@@ -135,6 +156,8 @@ const CreateAgent = () => {
   if (isSubmitting) {
     return <LoadingFallback />;
   }
+
+  // ... keep existing code (JSX for the form layout)
 
   return (
     <div className="container mx-auto p-8 animate-fadeIn">
