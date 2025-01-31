@@ -224,7 +224,11 @@ const CreateAgent = () => {
                         Next
                       </Button>
                     ) : (
-                      <Button type="submit" disabled={isSubmitting}>
+                      <Button 
+                        type="submit" 
+                        disabled={isSubmitting}
+                        onClick={() => form.handleSubmit(onSubmit)()}
+                      >
                         Create Agent
                       </Button>
                     )}
@@ -236,6 +240,14 @@ const CreateAgent = () => {
 
           <TabsContent value="preview">
             <AgentPreview formData={form.getValues()} />
+            <div className="mt-6 flex justify-end">
+              <Button
+                onClick={() => form.handleSubmit(onSubmit)()}
+                disabled={isSubmitting}
+              >
+                Create Agent
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
       </Card>
