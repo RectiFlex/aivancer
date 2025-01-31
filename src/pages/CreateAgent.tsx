@@ -13,6 +13,7 @@ import ProgressSteps from "@/components/ProgressSteps";
 import LoadingFallback from "@/components/LoadingFallback";
 import AgentFormFields from "@/components/AgentFormFields";
 import AgentPreview from "@/components/AgentPreview";
+import { useAuth } from "@/components/AuthProvider";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -46,6 +47,7 @@ const steps = [
 ];
 
 const CreateAgent = () => {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const template = searchParams.get("template");
   const navigate = useNavigate();
@@ -72,6 +74,7 @@ const CreateAgent = () => {
       const { error } = await supabase.from("agents").insert({
         name: values.name,
         status: "draft",
+        creator_id: user?.id,
         configuration: {
           bio: values.bio,
           modelProvider: values.modelProvider,
@@ -102,12 +105,13 @@ const CreateAgent = () => {
     try {
       setIsSubmitting(true);
       
-      // Create the agent
+      // Create the agent with creator_id
       const { data: agent, error: agentError } = await supabase
         .from("agents")
         .insert({
           name: values.name,
           status: "active",
+          creator_id: user?.id,
           configuration: {
             bio: values.bio,
             modelProvider: values.modelProvider,
@@ -128,6 +132,7 @@ const CreateAgent = () => {
           .insert(
             values.files.map(file => ({
               agent_id: agent.id,
+              creator_id: user?.id,
               file_name: file.name,
               file_path: file.path,
             }))
@@ -156,8 +161,6 @@ const CreateAgent = () => {
   if (isSubmitting) {
     return <LoadingFallback />;
   }
-
-  // ... keep existing code (JSX for the form layout)
 
   return (
     <div className="container mx-auto p-8 animate-fadeIn">
