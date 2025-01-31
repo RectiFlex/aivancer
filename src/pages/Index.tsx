@@ -52,7 +52,7 @@ const Index = () => {
                 title="Create New Agent"
                 description="Start building your custom AI agent with our intuitive creation wizard"
                 icon={PlusCircle}
-                onClick={() => navigate('/create-agent')}
+                onClick={() => navigate('/create')}
               />
               <SystemStatus />
             </div>
