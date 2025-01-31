@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Form } from "@/components/ui/form"; // Add this import
+import { Form } from "@/components/ui/form";
 import ProgressSteps from "@/components/ProgressSteps";
 import LoadingFallback from "@/components/LoadingFallback";
 import AgentFormFields from "@/components/AgentFormFields";
@@ -16,16 +16,14 @@ import AgentPreview from "@/components/AgentPreview";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  modelProvider: z.string(),
-  clients: z.array(z.string()),
-  plugins: z.array(z.string()),
   bio: z.string().min(10, "Bio must be at least 10 characters"),
-  lore: z.string(),
-  messageExamples: z.string(),
-  postExamples: z.string(),
+  modelProvider: z.string(),
+  lore: z.string().optional(),
   style: z.enum(["All", "Chat", "Post"]),
-  topics: z.string(),
-  adjectives: z.string(),
+  files: z.array(z.object({
+    path: z.string(),
+    name: z.string()
+  })).optional()
 });
 
 const steps = [
@@ -43,7 +41,7 @@ const steps = [
   },
   {
     title: "Preview",
-    description: "Review and test your agent",
+    description: "Review your agent",
   },
 ];
 
@@ -60,16 +58,11 @@ const CreateAgent = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      modelProvider: "",
-      clients: [],
-      plugins: [],
       bio: "",
+      modelProvider: "",
       lore: "",
-      messageExamples: "",
-      postExamples: "",
       style: "All",
-      topics: "",
-      adjectives: "",
+      files: []
     },
   });
 
@@ -79,18 +72,12 @@ const CreateAgent = () => {
       const { error } = await supabase.from("agents").insert({
         name: values.name,
         status: "draft",
-        creator_id: (await supabase.auth.getUser()).data.user?.id,
         configuration: {
-          style: values.style,
           bio: values.bio,
           modelProvider: values.modelProvider,
           lore: values.lore,
-          plugins: values.plugins,
-          clients: values.clients,
-          messageExamples: values.messageExamples,
-          postExamples: values.postExamples,
-          topics: values.topics,
-          adjectives: values.adjectives,
+          style: values.style,
+          files: values.files
         },
       });
 
@@ -117,18 +104,12 @@ const CreateAgent = () => {
       const { error } = await supabase.from("agents").insert({
         name: values.name,
         status: "active",
-        creator_id: (await supabase.auth.getUser()).data.user?.id,
         configuration: {
-          style: values.style,
           bio: values.bio,
           modelProvider: values.modelProvider,
           lore: values.lore,
-          plugins: values.plugins,
-          clients: values.clients,
-          messageExamples: values.messageExamples,
-          postExamples: values.postExamples,
-          topics: values.topics,
-          adjectives: values.adjectives,
+          style: values.style,
+          files: values.files
         },
       });
 
