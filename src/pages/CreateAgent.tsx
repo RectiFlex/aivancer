@@ -119,6 +119,8 @@ const CreateAgent = () => {
             style: values.style,
             files: values.files
           },
+          ai_provider: values.modelProvider,
+          system_prompt: values.lore,
         })
         .select()
         .single();
@@ -227,7 +229,6 @@ const CreateAgent = () => {
                       <Button 
                         type="submit" 
                         disabled={isSubmitting}
-                        onClick={() => form.handleSubmit(onSubmit)()}
                       >
                         Create Agent
                       </Button>
