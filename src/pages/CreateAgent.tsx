@@ -26,16 +26,17 @@ const formSchema = z.object({
   style: z.string(),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 const CreateAgent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [previewMode, setPreviewMode] = useState(false);
   const [deploymentStatus, setDeploymentStatus] = useState<'idle' | 'creating' | 'deploying' | 'completed' | 'error'>('idle');
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -46,6 +47,22 @@ const CreateAgent = () => {
       style: "All",
     },
   });
+
+  const getCurrentStepFields = () => {
+    const fields: Array<keyof FormValues> = [];
+    switch (currentStep) {
+      case 0:
+        fields.push("name", "bio", "files");
+        break;
+      case 1:
+        fields.push("modelProvider");
+        break;
+      case 2:
+        fields.push("lore", "style");
+        break;
+    }
+    return fields;
+  };
 
   const nextStep = () => {
     const currentFields = getCurrentStepFields();
@@ -65,20 +82,7 @@ const CreateAgent = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
   };
 
-  const getCurrentStepFields = () => {
-    switch (currentStep) {
-      case 0:
-        return ["name", "bio", "files"];
-      case 1:
-        return ["modelProvider"];
-      case 2:
-        return ["lore", "style"];
-      default:
-        return [];
-    }
-  };
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormValues) => {
     if (!user?.id) {
       toast({
         title: "Error",
@@ -92,7 +96,6 @@ const CreateAgent = () => {
       setIsSubmitting(true);
       setDeploymentStatus('creating');
       
-      // Create the agent with creator_id
       const { data: agentData, error: agentError } = await supabase
         .from("agents")
         .insert({
@@ -115,7 +118,6 @@ const CreateAgent = () => {
 
       setDeploymentStatus('deploying');
 
-      // If there are files, link them to the agent
       if (values.files && values.files.length > 0) {
         const { error: filesError } = await supabase
           .from("agent_files")
@@ -131,7 +133,6 @@ const CreateAgent = () => {
         if (filesError) throw filesError;
       }
 
-      // Update agent status to active after successful deployment
       const { error: updateError } = await supabase
         .from("agents")
         .update({ status: "active" })
@@ -223,7 +224,7 @@ const CreateAgent = () => {
                       <Button 
                         type="submit" 
                         disabled={isSubmitting}
-                        onClick={() => form.handleSubmit(onSubmit)()}
+                        onClick={form.handleSubmit(onSubmit)}
                       >
                         {isSubmitting ? (
                           <>
@@ -247,7 +248,7 @@ const CreateAgent = () => {
             <AgentPreview formData={form.getValues()} />
             <div className="mt-6 flex justify-end">
               <Button
-                onClick={() => form.handleSubmit(onSubmit)()}
+                onClick={form.handleSubmit(onSubmit)}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
