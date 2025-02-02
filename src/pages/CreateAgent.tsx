@@ -14,6 +14,7 @@ import LoadingFallback from "@/components/LoadingFallback";
 import AgentFormFields from "@/components/AgentFormFields";
 import AgentPreview from "@/components/AgentPreview";
 import { useAuth } from "@/components/AuthProvider";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -55,6 +56,7 @@ const CreateAgent = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const [deploymentStatus, setDeploymentStatus] = useState<'idle' | 'creating' | 'deploying' | 'completed' | 'error'>('idle');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -104,13 +106,14 @@ const CreateAgent = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSubmitting(true);
+      setDeploymentStatus('creating');
       
       // Create the agent with creator_id
       const { data: agent, error: agentError } = await supabase
         .from("agents")
         .insert({
           name: values.name,
-          status: "active",
+          status: "training",
           creator_id: user?.id,
           configuration: {
             bio: values.bio,
@@ -126,6 +129,8 @@ const CreateAgent = () => {
         .single();
 
       if (agentError) throw agentError;
+
+      setDeploymentStatus('deploying');
 
       // If there are files, link them to the agent
       if (values.files && values.files.length > 0) {
@@ -143,13 +148,23 @@ const CreateAgent = () => {
         if (filesError) throw filesError;
       }
 
+      // Update agent status to active after successful deployment
+      const { error: updateError } = await supabase
+        .from("agents")
+        .update({ status: "active" })
+        .eq('id', agent.id);
+
+      if (updateError) throw updateError;
+
+      setDeploymentStatus('completed');
       toast({
         title: "Success",
-        description: "Your agent has been created successfully!",
+        description: "Your agent has been created and deployed successfully!",
       });
       
       navigate("/agents");
     } catch (error: any) {
+      setDeploymentStatus('error');
       toast({
         title: "Error",
         description: error.message,
@@ -160,8 +175,28 @@ const CreateAgent = () => {
     }
   };
 
+  const getDeploymentStatusMessage = () => {
+    switch (deploymentStatus) {
+      case 'creating':
+        return 'Creating agent...';
+      case 'deploying':
+        return 'Deploying agent...';
+      case 'completed':
+        return 'Agent deployed successfully!';
+      case 'error':
+        return 'Error deploying agent';
+      default:
+        return '';
+    }
+  };
+
   if (isSubmitting) {
-    return <LoadingFallback />;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <LoadingFallback />
+        <p className="mt-4 text-lg font-medium">{getDeploymentStatusMessage()}</p>
+      </div>
+    );
   }
 
   return (
@@ -230,7 +265,14 @@ const CreateAgent = () => {
                         type="submit" 
                         disabled={isSubmitting}
                       >
-                        Create Agent
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating Agent...
+                          </>
+                        ) : (
+                          'Create Agent'
+                        )}
                       </Button>
                     )}
                   </div>
@@ -246,7 +288,14 @@ const CreateAgent = () => {
                 onClick={() => form.handleSubmit(onSubmit)()}
                 disabled={isSubmitting}
               >
-                Create Agent
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Agent...
+                  </>
+                ) : (
+                  'Create Agent'
+                )}
               </Button>
             </div>
           </TabsContent>
