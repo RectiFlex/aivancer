@@ -1,15 +1,13 @@
 import { useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import ProgressSteps from "@/components/ProgressSteps";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import LoadingFallback from "@/components/LoadingFallback";
 import AgentFormFields from "@/components/AgentFormFields";
 import AgentPreview from "@/components/AgentPreview";
@@ -19,40 +17,19 @@ import { Loader2 } from "lucide-react";
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   bio: z.string().min(10, "Bio must be at least 10 characters"),
-  modelProvider: z.string(),
-  lore: z.string().optional(),
-  style: z.enum(["All", "Chat", "Post"]),
   files: z.array(z.object({
     path: z.string(),
     name: z.string()
-  })).optional()
+  })).optional(),
+  modelProvider: z.string(),
+  lore: z.string().optional(),
+  style: z.string(),
 });
 
-const steps = [
-  {
-    title: "Basic Information",
-    description: "Enter the agent's name and basic details",
-  },
-  {
-    title: "Configuration",
-    description: "Set up model provider and integrations",
-  },
-  {
-    title: "Personality",
-    description: "Define the agent's character and behavior",
-  },
-  {
-    title: "Preview",
-    description: "Review your agent",
-  },
-];
-
 const CreateAgent = () => {
-  const { user } = useAuth();
-  const [searchParams] = useSearchParams();
-  const template = searchParams.get("template");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
@@ -63,72 +40,78 @@ const CreateAgent = () => {
     defaultValues: {
       name: "",
       bio: "",
-      modelProvider: "",
+      files: [],
+      modelProvider: "openai",
       lore: "",
       style: "All",
-      files: []
     },
   });
 
-  const saveDraft = async () => {
-    try {
-      const values = form.getValues();
-      const { error } = await supabase.from("agents").insert({
-        name: values.name,
-        status: "draft",
-        creator_id: user?.id,
-        configuration: {
-          bio: values.bio,
-          modelProvider: values.modelProvider,
-          lore: values.lore,
-          style: values.style,
-          files: values.files
-        },
-      });
+  const nextStep = () => {
+    const currentFields = getCurrentStepFields();
+    const isValid = currentFields.every((field) => {
+      const fieldState = form.getFieldState(field);
+      return !fieldState.invalid;
+    });
 
-      if (error) throw error;
+    if (isValid) {
+      setCurrentStep((prev) => Math.min(prev + 1, 2));
+    } else {
+      form.trigger(currentFields);
+    }
+  };
 
-      toast({
-        title: "Draft Saved",
-        description: "Your agent has been saved as a draft.",
-      });
+  const prevStep = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
+  };
 
-      navigate("/agents");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+  const getCurrentStepFields = () => {
+    switch (currentStep) {
+      case 0:
+        return ["name", "bio", "files"];
+      case 1:
+        return ["modelProvider"];
+      case 2:
+        return ["lore", "style"];
+      default:
+        return [];
     }
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create an agent",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setDeploymentStatus('creating');
       
       // Create the agent with creator_id
-      const { data: agent, error: agentError } = await supabase
+      const { data: agentData, error: agentError } = await supabase
         .from("agents")
         .insert({
           name: values.name,
           status: "training",
-          creator_id: user?.id,
+          creator_id: user.id,
           configuration: {
             bio: values.bio,
-            modelProvider: values.modelProvider,
             lore: values.lore,
             style: values.style,
-            files: values.files
           },
           ai_provider: values.modelProvider,
-          system_prompt: values.lore,
+          system_prompt: values.lore || "",
         })
         .select()
         .single();
 
       if (agentError) throw agentError;
+      if (!agentData) throw new Error("Failed to create agent");
 
       setDeploymentStatus('deploying');
 
@@ -137,9 +120,9 @@ const CreateAgent = () => {
         const { error: filesError } = await supabase
           .from("agent_files")
           .insert(
-            values.files.map(file => ({
-              agent_id: agent.id,
-              creator_id: user?.id,
+            values.files.map((file) => ({
+              agent_id: agentData.id,
+              creator_id: user.id,
               file_name: file.name,
               file_path: file.path,
             }))
@@ -152,7 +135,7 @@ const CreateAgent = () => {
       const { error: updateError } = await supabase
         .from("agents")
         .update({ status: "active" })
-        .eq('id', agent.id);
+        .eq('id', agentData.id);
 
       if (updateError) throw updateError;
 
@@ -200,63 +183,39 @@ const CreateAgent = () => {
   }
 
   return (
-    <div className="container mx-auto p-8 animate-fadeIn">
-      <Card className="max-w-4xl mx-auto p-6 glass-card">
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">
-              {template
-                ? `Create ${template.split("-").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")}`
-                : "Create New Agent"}
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Follow the steps below to create your agent
-            </p>
-          </div>
-          <ProgressSteps steps={steps} currentStep={currentStep} />
-        </div>
-
-        <Tabs
-          defaultValue="edit"
-          value={previewMode ? "preview" : "edit"}
-          onValueChange={(value) => setPreviewMode(value === "preview")}
-          className="w-full"
-        >
-          <TabsList className="mb-6">
+    <div className="container mx-auto py-8">
+      <Tabs defaultValue="edit" className="w-full">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Create Agent</h1>
+          <TabsList>
             <TabsTrigger value="edit">Edit</TabsTrigger>
             <TabsTrigger value="preview">Preview</TabsTrigger>
           </TabsList>
+        </div>
 
-          <TabsContent value="edit">
+        <TabsContent value="edit">
+          <div className="max-w-2xl mx-auto">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form className="space-y-6">
                 <AgentFormFields form={form} currentStep={currentStep} />
-                
-                <div className="flex justify-between pt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={saveDraft}
-                    disabled={isSubmitting}
-                  >
-                    Save as Draft
-                  </Button>
-                  
-                  <div className="space-x-4">
-                    {currentStep > 0 && (
+
+                <div className="flex justify-between pt-4">
+                  {currentStep > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={prevStep}
+                      disabled={isSubmitting}
+                    >
+                      Previous
+                    </Button>
+                  )}
+                  <div className="ml-auto">
+                    {currentStep < 2 ? (
                       <Button
                         type="button"
-                        variant="outline"
-                        onClick={() => setCurrentStep(currentStep - 1)}
-                      >
-                        Previous
-                      </Button>
-                    )}
-                    
-                    {currentStep < steps.length - 1 ? (
-                      <Button
-                        type="button"
-                        onClick={() => setCurrentStep(currentStep + 1)}
+                        onClick={nextStep}
+                        disabled={isSubmitting}
                       >
                         Next
                       </Button>
@@ -264,6 +223,7 @@ const CreateAgent = () => {
                       <Button 
                         type="submit" 
                         disabled={isSubmitting}
+                        onClick={() => form.handleSubmit(onSubmit)()}
                       >
                         {isSubmitting ? (
                           <>
@@ -279,9 +239,11 @@ const CreateAgent = () => {
                 </div>
               </form>
             </Form>
-          </TabsContent>
+          </div>
+        </TabsContent>
 
-          <TabsContent value="preview">
+        <TabsContent value="preview">
+          <div className="max-w-2xl mx-auto">
             <AgentPreview formData={form.getValues()} />
             <div className="mt-6 flex justify-end">
               <Button
@@ -298,9 +260,9 @@ const CreateAgent = () => {
                 )}
               </Button>
             </div>
-          </TabsContent>
-        </Tabs>
-      </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
