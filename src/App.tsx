@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -33,66 +35,73 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <Index />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/templates"
-                element={
-                  <ProtectedRoute>
-                    <Templates />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/create"
-                element={
-                  <ProtectedRoute>
-                    <CreateAgent />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/agents"
-                element={
-                  <ProtectedRoute>
-                    <Agents />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/chat"
-                element={
-                  <ProtectedRoute>
-                    <AgentChat />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/monitoring"
-                element={
-                  <ProtectedRoute>
-                    <Monitoring />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <SidebarProvider>
+              <div className="min-h-screen flex w-full">
+                <AppSidebar />
+                <main className="flex-1">
+                  <Routes>
+                    <Route path="/auth" element={<Auth />} />
+                    <Route
+                      path="/"
+                      element={
+                        <ProtectedRoute>
+                          <Index />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/templates"
+                      element={
+                        <ProtectedRoute>
+                          <Templates />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/create"
+                      element={
+                        <ProtectedRoute>
+                          <CreateAgent />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/agents"
+                      element={
+                        <ProtectedRoute>
+                          <Agents />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/chat"
+                      element={
+                        <ProtectedRoute>
+                          <AgentChat />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/monitoring"
+                      element={
+                        <ProtectedRoute>
+                          <Monitoring />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/settings"
+                      element={
+                        <ProtectedRoute>
+                          <Settings />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </main>
+              </div>
+            </SidebarProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

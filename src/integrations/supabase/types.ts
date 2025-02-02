@@ -59,36 +59,51 @@ export type Database = {
       }
       agents: {
         Row: {
+          ai_model: string | null
+          ai_provider: string | null
           configuration: Json
           created_at: string | null
           creator_id: string | null
           description: string | null
           id: string
           is_public: boolean | null
+          max_tokens: number | null
           name: string
           status: Database["public"]["Enums"]["agent_status"] | null
+          system_prompt: string | null
+          temperature: number | null
           updated_at: string | null
         }
         Insert: {
+          ai_model?: string | null
+          ai_provider?: string | null
           configuration?: Json
           created_at?: string | null
           creator_id?: string | null
           description?: string | null
           id?: string
           is_public?: boolean | null
+          max_tokens?: number | null
           name: string
           status?: Database["public"]["Enums"]["agent_status"] | null
+          system_prompt?: string | null
+          temperature?: number | null
           updated_at?: string | null
         }
         Update: {
+          ai_model?: string | null
+          ai_provider?: string | null
           configuration?: Json
           created_at?: string | null
           creator_id?: string | null
           description?: string | null
           id?: string
           is_public?: boolean | null
+          max_tokens?: number | null
           name?: string
           status?: Database["public"]["Enums"]["agent_status"] | null
+          system_prompt?: string | null
+          temperature?: number | null
           updated_at?: string | null
         }
         Relationships: [
