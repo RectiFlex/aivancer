@@ -15,7 +15,14 @@ const useSystemChecks = () => {
     queryFn: async () => {
       try {
         const start = Date.now();
-        const { data } = await supabase.from("agents").select("count(*)");
+        // Fixed the query to use a simpler check
+        const { data, error } = await supabase
+          .from('agents')
+          .select('id')
+          .limit(1);
+          
+        if (error) throw error;
+        
         const latency = Date.now() - start;
         return {
           name: "Database Connection",
@@ -42,6 +49,8 @@ const useSystemChecks = () => {
           .select("status")
           .eq("status", "active")
           .limit(1);
+
+        if (error) throw error;
 
         return {
           name: "Agent System",
