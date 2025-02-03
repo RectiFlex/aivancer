@@ -1,32 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import LoadingFallback from "@/components/LoadingFallback";
-import AgentFormFields from "@/components/AgentFormFields";
-import AgentPreview from "@/components/AgentPreview";
 import { useAuth } from "@/components/AuthProvider";
-import { Loader2 } from "lucide-react";
-
-const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  bio: z.string().min(10, "Bio must be at least 10 characters"),
-  files: z.array(z.object({
-    path: z.string(),
-    name: z.string()
-  })).optional(),
-  modelProvider: z.string(),
-  lore: z.string().optional(),
-  style: z.string(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import AgentPreview from "@/components/AgentPreview";
+import CreateAgentForm, { FormValues } from "@/components/create-agent/CreateAgentForm";
+import DeploymentStatus from "@/components/create-agent/DeploymentStatus";
 
 const CreateAgent = () => {
   const navigate = useNavigate();
@@ -35,54 +15,9 @@ const CreateAgent = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deploymentStatus, setDeploymentStatus] = useState<'idle' | 'creating' | 'deploying' | 'completed' | 'error'>('idle');
+  const [formData, setFormData] = useState<FormValues | null>(null);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      bio: "",
-      files: [],
-      modelProvider: "openai",
-      lore: "",
-      style: "All",
-    },
-  });
-
-  const getCurrentStepFields = () => {
-    const fields: Array<keyof FormValues> = [];
-    switch (currentStep) {
-      case 0:
-        fields.push("name", "bio", "files");
-        break;
-      case 1:
-        fields.push("modelProvider");
-        break;
-      case 2:
-        fields.push("lore", "style");
-        break;
-    }
-    return fields;
-  };
-
-  const nextStep = () => {
-    const currentFields = getCurrentStepFields();
-    const isValid = currentFields.every((field) => {
-      const fieldState = form.getFieldState(field);
-      return !fieldState.invalid;
-    });
-
-    if (isValid) {
-      setCurrentStep((prev) => Math.min(prev + 1, 2));
-    } else {
-      form.trigger(currentFields);
-    }
-  };
-
-  const prevStep = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 0));
-  };
-
-  const onSubmit = async (values: FormValues) => {
+  const handleSubmit = async (values: FormValues) => {
     if (!user?.id) {
       toast({
         title: "Error",
@@ -95,21 +30,15 @@ const CreateAgent = () => {
     try {
       setIsSubmitting(true);
       setDeploymentStatus('creating');
+      setFormData(values);
       
-      // Create agent using Edge Function
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-agent`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: values.name,
-          bio: values.bio,
-          lore: values.lore,
-          style: values.style,
-          modelProvider: values.modelProvider,
-        }),
+        body: JSON.stringify(values),
       });
 
       if (!response.ok) {
@@ -155,28 +84,16 @@ const CreateAgent = () => {
     }
   };
 
-  const getDeploymentStatusMessage = () => {
-    switch (deploymentStatus) {
-      case 'creating':
-        return 'Creating agent...';
-      case 'deploying':
-        return 'Deploying agent...';
-      case 'completed':
-        return 'Agent deployed successfully!';
-      case 'error':
-        return 'Error deploying agent';
-      default:
-        return '';
-    }
+  const handleNextStep = () => {
+    setCurrentStep((prev) => Math.min(prev + 1, 2));
+  };
+
+  const handlePrevStep = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
   };
 
   if (isSubmitting) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <LoadingFallback />
-        <p className="mt-4 text-lg font-medium">{getDeploymentStatusMessage()}</p>
-      </div>
-    );
+    return <DeploymentStatus status={deploymentStatus} />;
   }
 
   return (
@@ -192,71 +109,19 @@ const CreateAgent = () => {
 
         <TabsContent value="edit">
           <div className="max-w-2xl mx-auto">
-            <Form {...form}>
-              <form className="space-y-6">
-                <AgentFormFields form={form} currentStep={currentStep} />
-
-                <div className="flex justify-between pt-4">
-                  {currentStep > 0 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={prevStep}
-                      disabled={isSubmitting}
-                    >
-                      Previous
-                    </Button>
-                  )}
-                  <div className="ml-auto">
-                    {currentStep < 2 ? (
-                      <Button
-                        type="button"
-                        onClick={nextStep}
-                        disabled={isSubmitting}
-                      >
-                        Next
-                      </Button>
-                    ) : (
-                      <Button 
-                        type="submit" 
-                        disabled={isSubmitting}
-                        onClick={form.handleSubmit(onSubmit)}
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Creating Agent...
-                          </>
-                        ) : (
-                          'Create Agent'
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </form>
-            </Form>
+            <CreateAgentForm
+              onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+              currentStep={currentStep}
+              onNextStep={handleNextStep}
+              onPrevStep={handlePrevStep}
+            />
           </div>
         </TabsContent>
 
         <TabsContent value="preview">
           <div className="max-w-2xl mx-auto">
-            <AgentPreview formData={form.getValues()} />
-            <div className="mt-6 flex justify-end">
-              <Button
-                onClick={form.handleSubmit(onSubmit)}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Agent...
-                  </>
-                ) : (
-                  'Create Agent'
-                )}
-              </Button>
-            </div>
+            <AgentPreview formData={formData} />
           </div>
         </TabsContent>
       </Tabs>
