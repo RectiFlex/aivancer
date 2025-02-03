@@ -7,12 +7,16 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    console.log('Starting agent creation process');
+    
     const { name, bio, lore, style, modelProvider } = await req.json();
+    console.log('Received data:', { name, bio, lore, style, modelProvider });
 
     // Create Supabase client
     const supabaseClient = createClient(
@@ -22,13 +26,20 @@ serve(async (req) => {
 
     // Get auth user
     const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(
-      authHeader?.replace('Bearer ', '') ?? ''
+      authHeader.replace('Bearer ', '')
     );
 
     if (userError || !user) {
+      console.error('Auth error:', userError);
       throw new Error('Unauthorized');
     }
+
+    console.log('Authenticated user:', user.id);
 
     // Create agent in database
     const { data: agentData, error: agentError } = await supabaseClient
@@ -48,7 +59,12 @@ serve(async (req) => {
       .select()
       .single();
 
-    if (agentError) throw agentError;
+    if (agentError) {
+      console.error('Database error:', agentError);
+      throw agentError;
+    }
+
+    console.log('Agent created successfully:', agentData.id);
 
     return new Response(
       JSON.stringify({ agent: agentData }),
@@ -58,8 +74,12 @@ serve(async (req) => {
       },
     );
   } catch (error) {
+    console.error('Error in create-agent function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
