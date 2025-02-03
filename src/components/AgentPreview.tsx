@@ -6,18 +6,29 @@ interface AgentPreviewProps {
 }
 
 const AgentPreview = ({ formData }: AgentPreviewProps) => {
+  // Ensure formData exists, if not return empty state
+  if (!formData) {
+    return (
+      <Card className="p-6">
+        <p className="text-muted-foreground">No preview data available</p>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card className="p-6">
         <div className="flex justify-between items-start">
           <div>
-            <h2 className="text-2xl font-bold">{formData.name}</h2>
-            <p className="text-muted-foreground mt-2">{formData.bio}</p>
+            <h2 className="text-2xl font-bold">{formData.name || 'Unnamed Agent'}</h2>
+            <p className="text-muted-foreground mt-2">{formData.bio || 'No bio provided'}</p>
           </div>
-          <Badge>{formData.modelProvider}</Badge>
+          {formData.modelProvider && (
+            <Badge>{formData.modelProvider}</Badge>
+          )}
         </div>
         
-        {formData.clients?.length > 0 && (
+        {Array.isArray(formData.clients) && formData.clients.length > 0 && (
           <div className="mt-4">
             <h3 className="font-semibold mb-2">Clients</h3>
             <div className="flex gap-2 flex-wrap">
@@ -28,16 +39,18 @@ const AgentPreview = ({ formData }: AgentPreviewProps) => {
           </div>
         )}
 
-        <div className="mt-6">
-          <h3 className="font-semibold mb-2">Model Settings</h3>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>Character Model: {formData.settings?.model}</p>
-            <p>Embedding Model: {formData.settings?.embeddingModel}</p>
-            <p>Voice Model: {formData.settings?.voice?.model}</p>
+        {formData.settings && (
+          <div className="mt-6">
+            <h3 className="font-semibold mb-2">Model Settings</h3>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>Character Model: {formData.settings?.model || 'Not specified'}</p>
+              <p>Embedding Model: {formData.settings?.embeddingModel || 'Not specified'}</p>
+              <p>Voice Model: {formData.settings?.voice?.model || 'Not specified'}</p>
+            </div>
           </div>
-        </div>
+        )}
         
-        {formData.lore?.length > 0 && (
+        {Array.isArray(formData.lore) && formData.lore.length > 0 && (
           <div className="mt-6">
             <h3 className="font-semibold mb-2">Background Story</h3>
             <ul className="list-disc pl-4 space-y-2 text-muted-foreground">
@@ -48,10 +61,11 @@ const AgentPreview = ({ formData }: AgentPreviewProps) => {
           </div>
         )}
 
-        {(formData.topics?.length > 0 || formData.adjectives?.length > 0) && (
+        {(Array.isArray(formData.topics) && formData.topics.length > 0) || 
+         (Array.isArray(formData.adjectives) && formData.adjectives.length > 0) && (
           <div className="mt-6">
             <h3 className="font-semibold mb-2">Characteristics</h3>
-            {formData.topics?.length > 0 && (
+            {Array.isArray(formData.topics) && formData.topics.length > 0 && (
               <div className="mb-4">
                 <h4 className="text-sm font-medium mb-2">Topics</h4>
                 <div className="flex gap-2 flex-wrap">
@@ -61,7 +75,7 @@ const AgentPreview = ({ formData }: AgentPreviewProps) => {
                 </div>
               </div>
             )}
-            {formData.adjectives?.length > 0 && (
+            {Array.isArray(formData.adjectives) && formData.adjectives.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium mb-2">Adjectives</h4>
                 <div className="flex gap-2 flex-wrap">
