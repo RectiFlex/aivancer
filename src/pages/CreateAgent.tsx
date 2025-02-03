@@ -13,7 +13,6 @@ import AgentFormFields from "@/components/AgentFormFields";
 import AgentPreview from "@/components/AgentPreview";
 import { useAuth } from "@/components/AuthProvider";
 import { Loader2 } from "lucide-react";
-import { ElizaOS } from "@elizaos/core";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -97,44 +96,28 @@ const CreateAgent = () => {
       setIsSubmitting(true);
       setDeploymentStatus('creating');
       
-      // Initialize ElizaOS
-      const eliza = new ElizaOS({
-        provider: values.modelProvider,
-        configuration: {
-          temperature: 0.7,
-          maxTokens: 500,
-        }
-      });
-
-      // Create agent using ElizaOS
-      const elizaAgent = await eliza.createAgent({
-        name: values.name,
-        description: values.bio,
-        systemPrompt: values.lore || "",
-        style: values.style,
-      });
-
-      // Store agent in Supabase
-      const { data: agentData, error: agentError } = await supabase
-        .from("agents")
-        .insert({
+      // Create agent using Edge Function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-agent`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: values.name,
-          status: "training",
-          creator_id: user.id,
-          configuration: {
-            bio: values.bio,
-            lore: values.lore,
-            style: values.style,
-            elizaAgentId: elizaAgent.id, // Store ElizaOS agent ID
-          },
-          ai_provider: values.modelProvider,
-          system_prompt: values.lore || "",
-        })
-        .select()
-        .single();
+          bio: values.bio,
+          lore: values.lore,
+          style: values.style,
+          modelProvider: values.modelProvider,
+        }),
+      });
 
-      if (agentError) throw agentError;
-      if (!agentData) throw new Error("Failed to create agent");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create agent');
+      }
+
+      const { agent: agentData } = await response.json();
 
       setDeploymentStatus('deploying');
 
@@ -153,20 +136,10 @@ const CreateAgent = () => {
         if (filesError) throw filesError;
       }
 
-      // Deploy the agent using ElizaOS
-      await elizaAgent.deploy();
-
-      const { error: updateError } = await supabase
-        .from("agents")
-        .update({ status: "active" })
-        .eq('id', agentData.id);
-
-      if (updateError) throw updateError;
-
       setDeploymentStatus('completed');
       toast({
         title: "Success",
-        description: "Your agent has been created and deployed successfully!",
+        description: "Your agent has been created successfully!",
       });
       
       navigate("/agents");
