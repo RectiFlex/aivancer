@@ -60,16 +60,19 @@ const AgentFormFields = ({ form, currentStep }: AgentFormFieldsProps) => {
 
         <FormField
           control={form.control}
-          name="files"
-          render={() => (
+          name="clients"
+          render={({ field }) => (
             <FormItem>
-              <FormLabel>Upload Files</FormLabel>
+              <FormLabel>Clients</FormLabel>
               <FormControl>
-                <FileUploadField
-                  onFileUpload={(fileData) => {
-                    const currentFiles = form.getValues("files") || [];
-                    form.setValue("files", [...currentFiles, fileData]);
+                <Input 
+                  placeholder="Enter clients (comma-separated)"
+                  {...field}
+                  onChange={(e) => {
+                    const clients = e.target.value.split(',').map(c => c.trim());
+                    field.onChange(clients);
                   }}
+                  value={Array.isArray(field.value) ? field.value.join(', ') : ''}
                 />
               </FormControl>
               <FormMessage />
@@ -105,6 +108,42 @@ const AgentFormFields = ({ form, currentStep }: AgentFormFieldsProps) => {
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="settings.model"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Character Model</FormLabel>
+              <Input placeholder="Enter character model" {...field} />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="settings.embeddingModel"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Embedding Model</FormLabel>
+              <Input placeholder="Enter embedding model" {...field} />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="settings.voice.model"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Voice Model</FormLabel>
+              <Input placeholder="Enter voice model" {...field} />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </>
     );
   }
@@ -120,9 +159,14 @@ const AgentFormFields = ({ form, currentStep }: AgentFormFieldsProps) => {
               <FormLabel>Lore/Background</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Enter agent's background story"
+                  placeholder="Enter agent's background story (one per line)"
                   className="min-h-[100px]"
                   {...field}
+                  onChange={(e) => {
+                    const lore = e.target.value.split('\n').filter(l => l.trim());
+                    field.onChange(lore);
+                  }}
+                  value={Array.isArray(field.value) ? field.value.join('\n') : ''}
                 />
               </FormControl>
               <FormMessage />
@@ -132,22 +176,43 @@ const AgentFormFields = ({ form, currentStep }: AgentFormFieldsProps) => {
         
         <FormField
           control={form.control}
-          name="style"
+          name="topics"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Communication Style</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select style" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="All">All</SelectItem>
-                  <SelectItem value="Chat">Chat</SelectItem>
-                  <SelectItem value="Post">Post</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormLabel>Topics</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="Enter topics (comma-separated)"
+                  {...field}
+                  onChange={(e) => {
+                    const topics = e.target.value.split(',').map(t => t.trim());
+                    field.onChange(topics);
+                  }}
+                  value={Array.isArray(field.value) ? field.value.join(', ') : ''}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="adjectives"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Adjectives</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="Enter adjectives (comma-separated)"
+                  {...field}
+                  onChange={(e) => {
+                    const adjectives = e.target.value.split(',').map(a => a.trim());
+                    field.onChange(adjectives);
+                  }}
+                  value={Array.isArray(field.value) ? field.value.join(', ') : ''}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

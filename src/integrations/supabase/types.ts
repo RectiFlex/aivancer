@@ -59,52 +59,76 @@ export type Database = {
       }
       agents: {
         Row: {
+          adjectives: Json | null
           ai_model: string | null
           ai_provider: string | null
+          clients: Json | null
           configuration: Json
           created_at: string | null
           creator_id: string | null
           description: string | null
+          embedding_model: string | null
           id: string
           is_public: boolean | null
           max_tokens: number | null
+          message_examples: Json | null
           name: string
+          post_examples: Json | null
           status: Database["public"]["Enums"]["agent_status"] | null
+          style_guidelines: Json | null
           system_prompt: string | null
           temperature: number | null
+          topics: Json | null
           updated_at: string | null
+          voice_settings: Json | null
         }
         Insert: {
+          adjectives?: Json | null
           ai_model?: string | null
           ai_provider?: string | null
+          clients?: Json | null
           configuration?: Json
           created_at?: string | null
           creator_id?: string | null
           description?: string | null
+          embedding_model?: string | null
           id?: string
           is_public?: boolean | null
           max_tokens?: number | null
+          message_examples?: Json | null
           name: string
+          post_examples?: Json | null
           status?: Database["public"]["Enums"]["agent_status"] | null
+          style_guidelines?: Json | null
           system_prompt?: string | null
           temperature?: number | null
+          topics?: Json | null
           updated_at?: string | null
+          voice_settings?: Json | null
         }
         Update: {
+          adjectives?: Json | null
           ai_model?: string | null
           ai_provider?: string | null
+          clients?: Json | null
           configuration?: Json
           created_at?: string | null
           creator_id?: string | null
           description?: string | null
+          embedding_model?: string | null
           id?: string
           is_public?: boolean | null
           max_tokens?: number | null
+          message_examples?: Json | null
           name?: string
+          post_examples?: Json | null
           status?: Database["public"]["Enums"]["agent_status"] | null
+          style_guidelines?: Json | null
           system_prompt?: string | null
           temperature?: number | null
+          topics?: Json | null
           updated_at?: string | null
+          voice_settings?: Json | null
         }
         Relationships: [
           {

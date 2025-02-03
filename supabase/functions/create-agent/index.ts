@@ -7,24 +7,28 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    console.log('Starting agent creation process');
-    
-    const { name, bio, lore, style, modelProvider } = await req.json();
-    console.log('Received data:', { name, bio, lore, style, modelProvider });
+    const { 
+      name, 
+      bio, 
+      lore, 
+      modelProvider, 
+      clients,
+      settings,
+      topics,
+      adjectives,
+      style
+    } = await req.json();
 
-    // Create Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get auth user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
@@ -35,36 +39,41 @@ serve(async (req) => {
     );
 
     if (userError || !user) {
-      console.error('Auth error:', userError);
       throw new Error('Unauthorized');
     }
 
-    console.log('Authenticated user:', user.id);
-
-    // Create agent in database
     const { data: agentData, error: agentError } = await supabaseClient
       .from('agents')
       .insert({
         name,
         creator_id: user.id,
         status: 'active',
+        description: bio,
         configuration: {
           bio,
           lore,
           style,
         },
         ai_provider: modelProvider,
-        system_prompt: lore || '',
+        ai_model: settings?.model,
+        embedding_model: settings?.embeddingModel,
+        voice_settings: settings?.voice || {},
+        clients: clients || [],
+        topics: topics || [],
+        adjectives: adjectives || [],
+        style_guidelines: style || {
+          all: [],
+          chat: [],
+          post: []
+        },
+        system_prompt: Array.isArray(lore) ? lore.join('\n') : lore || '',
       })
       .select()
       .single();
 
     if (agentError) {
-      console.error('Database error:', agentError);
       throw agentError;
     }
-
-    console.log('Agent created successfully:', agentData.id);
 
     return new Response(
       JSON.stringify({ agent: agentData }),
@@ -74,7 +83,6 @@ serve(async (req) => {
       },
     );
   } catch (error) {
-    console.error('Error in create-agent function:', error);
     return new Response(
       JSON.stringify({ 
         error: error.message,
