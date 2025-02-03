@@ -13,6 +13,7 @@ import AgentFormFields from "@/components/AgentFormFields";
 import AgentPreview from "@/components/AgentPreview";
 import { useAuth } from "@/components/AuthProvider";
 import { Loader2 } from "lucide-react";
+import { ElizaOS } from "@elizaos/core";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -96,6 +97,24 @@ const CreateAgent = () => {
       setIsSubmitting(true);
       setDeploymentStatus('creating');
       
+      // Initialize ElizaOS
+      const eliza = new ElizaOS({
+        provider: values.modelProvider,
+        configuration: {
+          temperature: 0.7,
+          maxTokens: 500,
+        }
+      });
+
+      // Create agent using ElizaOS
+      const elizaAgent = await eliza.createAgent({
+        name: values.name,
+        description: values.bio,
+        systemPrompt: values.lore || "",
+        style: values.style,
+      });
+
+      // Store agent in Supabase
       const { data: agentData, error: agentError } = await supabase
         .from("agents")
         .insert({
@@ -106,6 +125,7 @@ const CreateAgent = () => {
             bio: values.bio,
             lore: values.lore,
             style: values.style,
+            elizaAgentId: elizaAgent.id, // Store ElizaOS agent ID
           },
           ai_provider: values.modelProvider,
           system_prompt: values.lore || "",
@@ -132,6 +152,9 @@ const CreateAgent = () => {
 
         if (filesError) throw filesError;
       }
+
+      // Deploy the agent using ElizaOS
+      await elizaAgent.deploy();
 
       const { error: updateError } = await supabase
         .from("agents")
